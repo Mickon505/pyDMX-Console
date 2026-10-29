@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DMX Console Pro</title>
+    <script src="{{ url_for('static', filename='lib/socket.io.js') }}"></script>
+    <script src="{{ url_for('static', filename='lib/blockly_compressed.js') }}"></script>
+    <script src="{{ url_for('static', filename='lib/blocks_compressed.js') }}"></script>
+    <script src="{{ url_for('static', filename='lib/python_compressed.js') }}"></script>
+    <script src="{{ url_for('static', filename='lib/blockly_en.js') }}"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="top-nav">
+        <div class="nav-brand">pyDMX Console</div>
+    </div>
+
+    <div id="view-grid" class="view-container">
+        <div class="row top-row">
+            
+            <div class="panel half-width">
+                <div class="panel-header">
+                    <h2>Fixtures</h2>
+                <button class="btn-home">
+                    <svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                        <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                    </svg>
+                </button>
+
+                <button class="btn-remove">
+                    <svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                </button>
+                </div>
+                <div class="content-area" id="fixture-grid-container">
+                    <div id="fixture-grid"></div>
+                </div>
+            </div>
+    
+            <div class="panel half-width">
+                <div class="panel-header">
+                    <div class="panel-tabs">
+                        <button class="tab-btn active" id="btn-tab-colors" onclick="switchRightTab('colors')">Colors & Gobos</button>
+                        <button class="tab-btn" id="btn-tab-stage" onclick="switchRightTab('stage')">Stage View</button>
+                    </div>
+                </div>
+                
+                <div class="content-area">
+                    <div id="tab-colors-gobos">
+                        <div class="sub-label">COLORS</div>
+                        <div class="grid-colors">
+                            <div class="color-circle" style="background: red;" onclick="setColor(255,0,0)"></div>
+                            <div class="color-circle" style="background: lime;" onclick="setColor(0,255,0)"></div>
+                            <div class="color-circle" style="background: blue;" onclick="setColor(0,0,255)"></div>
+                            <div class="color-circle" style="background: white;" onclick="setColor(255,255,255)"></div>
+                            <div class="color-circle" style="background: orange;" onclick="setColor(255,165,0)"></div>
+                            <div class="color-circle" style="background: magenta;" onclick="setColor(255,0,255)"></div>
+                        </div>
+        
+                        <div class="sub-label" style="margin-top: 20px;">GOBOS</div>
+                        <div class="grid-gobos">
+                            <div class="gobo-item">open</div>
+                            <div class="gobo-item">star</div>
+                            <div class="gobo-item">circle</div>
+                            <div class="gobo-item">breakups</div>
+                        </div>
+                    </div>
+
+                    <!-- Záložka 2: Stage View Canvas -->
+                    <div id="tab-stage-view" style="display: none; height: 100%;">
+                        <div id="stage-canvas"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    
+        <div class="row bottom-row">
+            <div class="panel full-width">
+                <div class="panel-header">
+                    <div class="panel-tabs">
+                        <button class="tab-btn active" id="btn-tab-direct" onclick="switchBottomTab('direct')">Direct Faders</button>
+                        <button class="tab-btn" id="btn-tab-scenes" onclick="switchBottomTab('scenes')">Scene Faders</button>
+                    </div>
+                    <button class="btn-accent-scene" style="display: none;" id="btn-open-blockly" onclick="openBlocklyModal()">Edit Scene (Blockly)</button>
+                </div>
+                
+                <div class="content-area">
+                    <!-- Tab 1: Priame faddery fixtúr (To čo máš teraz) -->
+                    <div id="tab-direct-faders" style="height: 100%;">
+                        <div class="faders-container" id="fader-box"></div>
+                    </div>
+
+                    <!-- Tab 2: Faddery pre uložené Blockly scény -->
+                    <div id="tab-scene-faders" style="display: none; height: 100%;">
+                        <div class="faders-container" id="scene-fader-box">
+                            <!-- Sem sa budú dynamicky generovať faddery uložených scén -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Pre Pridanie Fixture -->
+    <div id="fixture-modal" class="modal">
+        <div class="modal-content panel">
+            <div class="panel-header">
+                <h2>Add New Fixture</h2>
+                <span class="close-modal">&times;</span>
+            </div>
+            <form id="fixture-form">
+                <div class="form-group">
+                    <label>Label</label>
+                    <input type="text" id="fix-label" placeholder="e.g. Front Wash 1" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>DMX Address</label>
+                        <input type="number" id="fix-address" min="1" max="512" value="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Number</label>
+                        <input type="number" id="fix-num" min="1" max="512" value="1" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Type</label>
+                    <select id="fix-type">
+                        <option value="group" id="opt-group">Group Together</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-accent" style="width: 100%; margin-top: 10px;">Save Fixture</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="blockly-modal" class="modal">
+        <div class="modal-content panel" style="max-width: 900px; width: 95%; height: 80vh;">
+            <div class="panel-header">
+                <h2>Blockly Scene Builder</h2>
+                <span class="close-modal" onclick="closeBlocklyModal()">&times;</span>
+            </div>
+            <div class="form-group" style="flex-direction: row; gap: 10px; margin-bottom: 10px;">
+                <input type="text" id="scene-name-input" placeholder="Názov scény (napr. Strobo Red)" style="flex: 1;">
+                <button class="btn-accent" onclick="saveCurrentScene()">Save scene</button>
+                <!--<button class="btn-accent" onclick="testCurrentScene()">Test</button>-->
+            </div>
+            <!-- V tomto kontajneri sa vykreslí Blockly editor -->
+            <div id="blockly-div" style="width: 100%; height: calc(100% - 90px);"></div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='UI_init.js') }}"></script>
+    <script src="{{ url_for('static', filename='fixture_manager.js') }}"></script>
+    <script src="{{ url_for('static', filename='stage_view.js') }}"></script>
+    <script src="{{ url_for('static', filename='blockly_setup.js') }}"></script>
+</body>
+</html>

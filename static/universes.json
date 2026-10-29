@@ -1,0 +1,14 @@
+{
+    "universe-1": [
+        {
+            "label": "pareka",
+            "address": 1,
+            "icon": "led_par",
+            "number": 1,
+            "type": "testESP",
+            "group": "",
+            "x": 0,
+            "y": 0
+        }
+    ]
+}

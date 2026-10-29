@@ -1,0 +1,629 @@
+:root {
+    --bg-color: #1a1a1a;
+    --panel-bg: #262626;
+    --accent-color: #00bcd4;
+    --text-main: #e0e0e0;
+    --text-muted: #888;
+    --fader-track: #111;
+    --fader-thumb: #444;
+    --base-blue: #6FC5F0;
+    --bg-dark: #181818;
+    --border-color: #242424;
+    --text-muted: #888;
+    --s-size: min(3.3vw, 30px);
+    --s-gap: 2px;
+    --accent-blue: #3E87DC;
+    --remove-color: #a10000;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    margin: 0;
+    padding: 10px;
+    height: 100vh;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    overflow: hidden; /* Žiadny scroll na tele, len v paneloch */
+}
+
+/* --- LAYOUT --- */
+.row {
+    display: flex;
+    gap: 10px;
+    flex: 1; /* Každý riadok zaberá 50% výšky */
+    min-height: 0; /* Dôležité pre flexbox scrollovanie */
+}
+
+.panel {
+    background: var(--panel-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+}
+
+.row.top-row { flex: 0 1 40%; min-height: 0;}
+.row.bottom-row { flex: 0 1 60%; min-height: 0;}
+
+.half-width { flex: 1; } /* 50% šírka */
+.full-width { flex: 1; } /* 100% šírka */
+
+/* --- HLAVIČKY --- */
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #424242;
+    padding-bottom: 12px;
+    margin-bottom: 20px;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+h2 {
+    margin: 0;
+    font-size: clamp(14px, 2vh, 22px);
+    text-transform: uppercase;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+    white-space: nowrap;
+}
+
+#remove-fixture {
+    background: transparent;
+    border: 1px solid var(--remove-color);
+    color: var(--remove-color);
+    font-weight: bold;
+    padding: 6px 12px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: clamp(14px, 2vh, 22px);
+}
+
+#group-fixtures {
+    background: transparent;
+    border: 1px solid var(--text-main);
+    color: var(--text-main);
+    font-weight: bold;
+    padding: 6px 12px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: clamp(14px, 2vh, 22px);
+}
+
+.btn-accent {
+    background: var(--accent-blue);
+    border: none;
+    color: #000;
+    font-weight: bold;
+    padding: 6px 12px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.btn-accent-scene {
+    background: var(--accent-blue);
+    border: none;
+    color: #000;
+    font-weight: bold;
+    padding: 6px 12px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.btn-home {
+    background: var(--bg-color);
+    border: 1px solid var(--bg-color);
+    border-radius: 4px;
+    color: white;
+}
+
+.btn-remove {
+    background: var(--remove-color);
+    border: 1px solid var(--bg-color);
+    border-radius: 4px;
+    color: white;
+}
+
+.content-area {
+    overflow-y: auto;
+    flex: 1;
+}
+
+/* --- FIXTURES --- */
+.fixture-btn {
+    background: #333;
+    border: 1px solid #444;
+    color: white;
+    padding: min(1.5vh, 12px) min(2vw, 20px);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: min(1.4vh, 14px);
+}
+.fixture-btn.active {
+    border-color: var(--accent-color);
+    background: #3d4d50;
+    color: var(--accent-color);
+}
+
+/* FIXTURES GRID */
+
+/* Kontajner pre grid s povoleným scrollom */
+#fixture-grid-container {
+    overflow-y: auto;
+    height: 100%;
+}
+
+#fixture-grid {
+    display: grid;
+    /* Vytvoríme 6 stĺpcov, ktoré sa prispôsobia šírke */
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 8px;
+    padding: 5px;
+}
+
+/* Štýl prázdnej bunky */
+/* Upravená bunka gridu pre zariadenia */
+.grid-cell {
+    position: relative;
+    background-color: #424242; /* Tvoja farba */
+    border: 1px solid #555;
+    border-radius: 12px; /* Zaoblenie podľa obrázka */
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end; /* Obsah tlačíme nadol */
+    padding: 8px;
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+    transition: all 0.2s;
+}
+
+/* Index zariadenia (vľavo hore) */
+.fix-index {
+    position: absolute;
+    top: 5px;
+    left: 8px;
+    font-size: 12px;
+    font-weight: bold;
+    color: var(--text-main);
+}
+
+/* Ikona zariadenia (v strede s offsetom hore) */
+.fix-icon {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 40px;
+}
+
+.fix-icon img {
+    width: 45px;  /* Nastav pevnú šírku */
+    height: 45px; /* Nastav pevnú výšku */
+    display: block;
+    object-fit: contain;
+    /* Ak je SVG čierne, toto ho vnútri CSS prefarbí na bielo */
+    filter: brightness(0) invert(1); 
+}
+
+/* Label zariadenia */
+.fix-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: white;
+    text-align: center;
+    width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Adresa (priehľadná dole) */
+.fix-addr {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.5); /* Priehľadný štýl */
+    margin-top: 2px;
+}
+
+/* Aktívny stav */
+.grid-cell.active {
+    border-color: var(--accent-color);
+    box-shadow: inset 0 0 10px rgba(0, 188, 212, 0.2);
+}
+
+.grid-cell:hover {
+    background-color: #555;
+    border-color: var(--accent-color);
+}
+
+/* Štýl bunky s už existujúcim zariadením */
+.fixture-btn {
+    width: 100%;
+    height: 100%;
+    margin: 0; /* Odstránime marginy, aby vyplnilo bunku */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    font-size: 11px;
+    padding: 5px;
+}
+
+/* --- COLORS & GOBOS --- */
+.sub-label { font-size: 11px; color: var(--text-muted); margin-bottom: 8px; font-weight: bold; white-space: nowrap;}
+.grid-colors { display: flex; gap: 10px; flex-wrap: wrap; }
+.color-circle { width: min(6vh, 40px); height: min(6vh, 40px); border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: transform 0.1s; }
+.color-circle:hover { transform: scale(1.1); border-color: white; }
+
+.grid-gobos { display: flex; gap: 15px; overflow-x: auto; padding-bottom: 5px; }
+.gobo-item {
+    min-width: min(10vh, 70px); height: min(10vh, 70px); background: #333; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: min(1.2vh, 11px); color: #aaa; border: 2px solid #444; cursor: pointer;
+}
+
+#fader-box {
+    display: flex;
+    height: 100%;
+    gap: 5px;
+    padding: 10px;
+    justify-content: space-around;
+    overflow: hidden;
+    background-color: #121212;
+    border-radius: 8px;
+    flex:1;
+}
+
+.fader-track {
+    position: relative;
+    height: 100%; /* Track využije maximum miesta v .fader-channel */
+    background: rgba(0,0,0,0.5);
+    padding: 4px;
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    flex: 1; /* Roztiahne track vertikálne */
+    box-sizing: border-box;
+}
+
+.fader-channel {
+    display: flex;
+    height: 100%; /* Kanál využije celú výšku fader-boxu */
+    justify-content: space-between;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    min-width: 35px;
+    max-width: 60px;
+    flex: 1;
+}
+
+.visual-layer {
+    display: flex;
+    flex-direction: column-reverse;
+    gap: var(--s-gap);
+    pointer-events: none;
+    flex: 1; 
+}
+
+.step {
+    width: var(--s-size); /* Vyplní šírku tracku */
+    flex: 1;     /* TOTO JE KĽÚČOVÉ: Každý krok si vezme rovnomerný diel výšky */
+    background: #252525;
+    border-radius: 1px;
+    position: relative;
+    min-height: 2px;
+}
+
+.glow {
+    position: absolute;
+    inset: 0;
+    background: var(--accent-blue);
+    box-shadow: 0 0 12px var(--accent-blue);
+    opacity: 0;
+    border-radius: 2px;
+}
+
+/* Slider presne nad .visual-layer */
+.actual-input {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: var(--s-size);
+    height: 100%;
+    margin: 0;
+    cursor: pointer;
+    opacity: 0;
+    z-index: 10;
+    -webkit-appearance: slider-vertical;
+    appearance: slider-vertical;
+}
+
+/* Skupina pre jeden fader (Button + Input + Label) */
+
+
+/* Flash tlačidlo */
+.flash-btn {
+    width: 100%;
+    background: #333;
+    border: 1px solid #444;
+    color: #ccc;
+    font-size: 11px;
+    padding: 5px 0;
+    border-radius: 4px;
+    cursor: pointer;
+    text-transform: uppercase;
+}
+.flash-btn:active { background: white; color: black; }
+
+
+
+/* Popis kanála */
+.channel-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-family: 'Courier New', Courier, monospace;
+}
+
+/* --- MODAL STYLES --- */
+.modal {
+    display: none; 
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.8);
+    backdrop-filter: blur(3px);
+}
+
+.modal-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    max-width: 400px;
+    border-color: var(--accent-color); /* Zvýraznenie okraja popupu */
+}
+
+.close-modal {
+    color: var(--text-muted);
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close-modal:hover { color: white; }
+
+.form-group { margin-bottom: 15px; display: flex; flex-direction: column; gap: 5px; }
+.form-row { display: flex; gap: 10px; }
+.form-row .form-group { flex: 1; }
+
+label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; }
+
+input, select {
+    background: #1a1a1a;
+    border: 1px solid var(--border-color);
+    color: white;
+    padding: 10px;
+    border-radius: 4px;
+    outline: none;
+}
+
+input:focus, select:focus { border-color: var(--accent-color); }
+
+/* --- HORNÁ LIŠTA A MENU --- */
+.top-nav {
+    display: flex;
+    background: var(--panel-bg);
+    padding: 8px 15px;
+    align-items: center;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    flex-shrink: 0;
+    gap: 30px;
+    z-index: 100;
+}
+
+.nav-brand {
+    font-weight: bold;
+    color: var(--accent-color);
+    letter-spacing: 1px;
+}
+
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropbtn {
+    background: transparent;
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    padding: 5px 10px;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: #2a2a2a;
+    min-width: 200px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.6);
+    z-index: 1000;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    top: 100%;
+}
+
+.dropdown-content a {
+    color: var(--text-main);
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+    font-size: 13px;
+}
+
+.dropdown-content a:hover {
+    background-color: var(--accent-blue);
+    color: white;
+}
+
+.dropdown:hover .dropdown-content { display: block; }
+
+/* --- POHĽADY (VIEWS) --- */
+.view-container {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    gap: 10px;
+}
+
+/* --- STAGE VIEW CANVAS --- */
+.stage-panel {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+#stage-canvas {
+    width: 100%;
+    height: 100%;
+    background: #0a0a0a;
+    border-radius: 6px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: inset 0 0 30px rgba(0,0,0,0.8);
+}
+
+.stage-fixture {
+    position: absolute;
+    width: 45px;
+    height: 45px;
+    background: #222;
+    border: 2px solid #555;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: grab;
+    user-select: none;
+    transform: translate(-50%, -50%); /* Center origin */
+    transition: background-color 0.1s, box-shadow 0.1s;
+}
+
+.stage-fixture:active { cursor: grabbing; }
+
+.stage-fixture img {
+    width: 25px;
+    height: 25px;
+    filter: brightness(0) invert(1);
+    pointer-events: none; /* Aby myš chytala div a nie obrázok */
+}
+
+/* Označenie na stage */
+.stage-fixture.active {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 15px var(--accent-color);
+}
+
+/* Upravíme kontajner svetla na stage */
+.stage-fixture {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    background: #1a1a1a;
+    border: 2px solid #444;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: grab;
+    user-select: none;
+    transform: translate(-50%, -50%);
+}
+
+.stage-fixture.active {
+    border-color: white; /* Biela ukazuje, že je vybraté */
+}
+
+/* Toto je samotná svietiaca šošovka (lens) */
+.stage-lens {
+    width: 70%;
+    height: 70%;
+    border-radius: 50%;
+    background-color: black;
+    box-shadow: 0 0 0px black;
+    transition: background-color 0.05s, box-shadow 0.05s;
+    pointer-events: none; /* Aby neblokovala drag & drop */
+}
+
+.panel-tabs {
+    display: flex;
+    gap: 15px;
+}
+
+.tab-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: clamp(14px, 2vh, 18px);
+    font-weight: bold;
+    text-transform: uppercase;
+    cursor: pointer;
+    padding: 0 0 4px 0;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.tab-btn:hover {
+    color: var(--text-main);
+}
+
+.tab-btn.active {
+    color: var(--accent-color);
+    border-bottom-color: var(--accent-color);
+}
+
+/* Prispôsobenie stage canvasu novému kontajneru */
+#tab-stage-view {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 180px;
+
+}
+/* Nastaví tmavé pozadie pre celú lištu kategórií */
+.blocklyToolbox {
+    background-color: #333 !important; /* Tmavosivá/čierna podľa tvojho UI */
+    color: #ffffff !important;
+}
+
+/* Zabezpečí, že text kategórií bude vždy biely a čitateľný */
+.blocklyFlyout {
+    background-color: #333;
+    color: #ffffff !important;
+}
+
+/* (Voliteľné) Zmena pozadia pri prejdení myšou cez kategóriu */
+.blocklyTreeRow:hover {
+    background-color: #333333 !important;
+}

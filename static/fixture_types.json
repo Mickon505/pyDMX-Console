@@ -1,0 +1,70 @@
+{
+  "moving_head_150": {
+    "type": "moving_head_150",
+    "icon": "moving_head",
+    "mode": "wheel",
+    "textName": "Spot 150W",
+    "offsets": { 
+      "pan": 0, 
+      "tilt": 1, 
+      "dimmer": 2, 
+      "shutter": 3, 
+      "color": 4, 
+      "static gobo": 5, 
+      "rotating gobo": 6, 
+      "gobo rotation": 7,
+      "prism": 8,
+      "focus": 9
+    },
+    "wheel": [
+      { "range": [0, 9],     "colors": [[255, 255, 255]] },
+      { "range": [10, 19],   "colors": [[255, 255, 255], [255, 0, 0]] },
+      { "range": [20, 29],   "colors": [[255, 0, 0]] },
+      { "range": [30, 39],   "colors": [[255, 0, 0], [255, 255, 0]] },
+      { "range": [40, 49],   "colors": [[255, 255, 0]] },
+      { "range": [50, 59],   "colors": [[255, 255, 0], [0, 0, 255]] },
+      { "range": [60, 69],   "colors": [[0, 0, 255] ]},
+      { "range": [70, 79],   "colors": [[0, 0, 255], [0, 255, 0]] },
+      { "range": [80, 89],   "colors": [[0, 255, 0]] },
+      { "range": [90, 99],   "colors": [[0, 255, 0], [255, 160, 0]] },
+      { "range": [100, 109], "colors": [[255, 160, 0]] },
+      { "range": [110, 119], "colors": [[255, 160, 0], [255, 0, 200]] },
+      { "range": [120, 129], "colors": [[255, 0, 200]] },
+      { "range": [130, 139], "colors": [[255, 0, 200], [100, 100, 255]] },
+      { "range": [140, 149], "colors": [[100, 100, 255]] },
+      { "range": [150, 159], "colors": [[100, 100, 255], [255, 255, 255]] },
+      { "range": [160, 255], "colors": [[100, 100, 255], [255, 255, 255]] }
+    ]
+  },
+
+  "ringo_led_par": {
+    "type": "ringo_led_par",
+    "icon": "led_par",
+    "mode": "rgb",
+    "textName": "LED PAR",
+    "offsets": { 
+      "dimmer": 0, 
+      "r": 1, 
+      "g": 2, 
+      "b": 3, 
+      "w": 4, 
+      "shutter": 5, 
+      "ring": 6, 
+      "ring speed": 7
+    }
+  },
+
+  "testESP": {
+    "type": "testESP",
+    "icon": "led_par",
+    "mode": "rgb",
+    "textName": "ESP Converter",
+    "offsets": {
+      "dimmer": 0,
+      "r":1,
+      "g":2,
+      "b":3,
+      "shutter":4
+    }
+  }
+}
