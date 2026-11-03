@@ -14,16 +14,11 @@ const TYPE_ICONS = {
 
 document.addEventListener("DOMContentLoaded", () => {
     const modal = document.getElementById("fixture-modal");
-    const addBtn = document.querySelector(".btn-accent"); 
-    const closeBtn = document.querySelector(".close-modal");
-    const removeBtn = document.getElementsByClassName("btn-remove")[0];
+    const closeBtn = document.getElementById("close-fixture-modal");
+    const removeBtn = document.getElementById("btn-remove-fixture");
     const form = document.getElementById("fixture-form");
-    const btnHome = document.getElementsByClassName("btn-home")[0];
+    const btnHome = document.getElementById("btn-home-fixture");
 
-    // Otvorenie modalov
-    addBtn.onclick = () => modal.style.display = "block";
-
-    // Zatvorenie x-kom
     closeBtn.onclick = () => modal.style.display = "none";
 
     btnHome.onclick = (event) => {
@@ -101,6 +96,11 @@ socket.on("update_fixtures", (fixtures) => {
 
     if(typeof renderStageView === "function"){
         renderStageView();
+    }
+
+    // Fixtures were added / removed / changed, let Blockly pick up the new list
+    if(typeof onFixturesChanged === "function"){
+        onFixturesChanged();
     }
 });
 

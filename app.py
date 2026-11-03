@@ -10,7 +10,9 @@ from flask_socketio import SocketIO, emit
 import Modules.fixtures_handler as FH
 import Modules.fixtures as FX
 from Modules.dmx_signal import DMXSignal
-from Modules.scene_code import Scene
+from Modules.scenes import Scene
+from Modules.presets_handler import PresetButton, PresetMatrix
+from Modules.presets import Preset
 
 class DMXApp:
     def __init__(self):
@@ -19,14 +21,17 @@ class DMXApp:
 
         self.BASE_DIR = os.path.dirname(os.path.abspath(__file__))
         self.UNIVERSE_PATH = os.path.join(self.BASE_DIR, "static", "universes.json")
+        self.PRESETS_PATH = os.path.join(self.BASE_DIR, "static", "presets.json")
         self.SERIAL_PORT = "/dev/ttyS0"
         self.BAUD_RATE = 250000 
 
 
         self.dmx = DMXSignal()
         self.fixture_matrix = None
+        self.preset_matrix = None
         self.fixture_selection = FH.FixtureSelection()
-        self.scene_fp = "scenes/test.py"
+        self.faders_code_fp = "scenes/faders_code.py"
+        self.presets_code_fp = "scenes/presets_code.py"
         self.scenes_active = False
 
         ROWS = 10
@@ -36,6 +41,11 @@ class DMXApp:
             self.fixture_matrix = FX.FixtureMatrix(data, (ROWS, COLS))
 
         Scene.setup(self.dmx, self.fixture_matrix, 16)
+        Preset.setup(self.dmx, self.fixture_matrix)
+
+        with open(self.PRESETS_PATH, "r") as f:
+            data = json.load(f)
+            self.preset_matrix = PresetMatrix(data, (ROWS, COLS))
 
         try:
             self.ser = serial.Serial(self.SERIAL_PORT, self.BAUD_RATE, stopbits=2)
@@ -43,11 +53,17 @@ class DMXApp:
             print(f"WARN: Serial port unavailable ({e}). Running only simulation")
             self.ser = None
 
-        if os.path.exists(self.scene_fp):
-            with open(self.scene_fp, "r") as f:
-                scene_code = f.read()
+        if os.path.exists(self.faders_code_fp):
+            with open(self.faders_code_fp, "r") as f:
+                code = f.read()
                 print("INFO: reloaded scenes")
-                exec(scene_code) 
+                exec(code) 
+
+        if os.path.exists(self.presets_code_fp):
+            with open(self.presets_code_fp, "r") as f:
+                code = f.read()
+                print("INFO: reloaded presets")
+                exec(code)
 
         self.setup_handlers()
 
@@ -98,6 +114,10 @@ class DMXApp:
             with open("scenes/saved_workspace.json", "r") as f:
                 state = json.loads(f.read())
                 self.socketio.emit("load_blockly_workspace", state)
+
+            with open("scenes/saved_workspace_presets.json", "r") as f:
+                state = json.loads(f.read())
+                self.socketio.emit("load_presets_blockly_workspace", state)
 
             self.socketio.emit("sync_ui_faders", Scene.get_dmx_channels())
 
@@ -150,17 +170,15 @@ class DMXApp:
         
         @self.socketio.on("save_scene")
         def save_scene(data):
-            with open("scenes/test.py", "w") as f:
-                f.write(data["scene_code"])
 
             with open("scenes/saved_workspace.json", "w") as f:
                 f.write(json.dumps(data["scene_workspace"]))
 
-            if os.path.exists(self.scene_fp):
-                with open(self.scene_fp, "r") as f:
-                    scene_code = f.read()
-                    print("INFO: reloaded scenes")
-                    exec(scene_code) 
+            with open("scenes/fader_code.py", "w") as f:
+                f.write(data["scene_code"])
+            
+                print("INFO: reloaded scenes")
+                exec(data["scene_code"]) 
 
 
         @self.socketio.on("add_fixture")
@@ -185,8 +203,45 @@ class DMXApp:
             self.dmx.set_home_pos()
 
         @self.socketio.on("load_home_position")
-        def save_home_pos():
+        def load_home_pos():
             self.dmx.load_home_pos()
+
+
+        @self.socketio.on("add_preset")
+        def add_preset(data):
+            self.preset_matrix.set_preset(data.get("x"), data.get("y"), PresetButton.from_dict(data))
+            self.preset_matrix.save_to_file(self.PRESETS_PATH)
+            self.socketio.emit("render_presets", self.preset_matrix.to_dict())
+
+
+        @self.socketio.on("remove_preset")
+        def rm_preset(data):
+            self.preset_matrix.remove_preset(data.get("x"), data.get("y"))
+            self.preset_matrix.save_to_file(self.PRESETS_PATH)
+            self.socketio.emit("render_presets", self.preset_matrix.to_dict())
+
+
+        @self.socketio.on("load_presets")
+        def load_presets():
+            self.socketio.emit("render_presets", self.preset_matrix.to_dict())
+
+
+        @self.socketio.on("save_preset")
+        def save_preset(data):
+
+            with open("scenes/saved_workspace_presets.json", "w") as f:
+                f.write(json.dumps(data["presets_workspace"]))
+
+            with open(self.presets_code_fp, "w") as f:
+                f.write(data["preset_code"])
+
+                print("INFO: reloaded presets")
+                exec(data["preset_code"]) 
+
+
+        @self.socketio.on("execute_preset")
+        def exec_preset(preset_id):
+            Preset.pressed(preset_id)
     
     
     def run(self):

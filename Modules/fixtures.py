@@ -1,8 +1,17 @@
 import json
 import os
+import uuid
+
+
+def generate_fixture_id() -> str:
+    """Returns a new globally unique fixture ID."""
+    return uuid.uuid4().hex
+
 
 class Fixture:
-    def __init__(self, gridPos: tuple[int, int], DMX_addr: int, fixture_num: int, fixture_type: str, fixture_icon: str = "none", fixture_label: str = "Fixture", group: str = ""):
+    def __init__(self, gridPos: tuple[int, int], DMX_addr: int, fixture_num: int, fixture_type: str, fixture_icon: str = "none", fixture_label: str = "Fixture", group: str = "", fixture_id: str = None):
+        # Unique, stable identifier. Generated if not supplied (e.g. new fixture or legacy data).
+        self.fixture_id = str(fixture_id) if fixture_id else generate_fixture_id()
         self.DMX_addr = int(DMX_addr)
         self.fixture_num = int(fixture_num)
         self.icon = fixture_icon
@@ -24,7 +33,11 @@ class Fixture:
         if attr_key in self.fixture_channels:
             offset = int(self.fixture_channels[attr_key])
             return self.DMX_addr + offset
-        raise AttributeError(f"Fixture {self.fixture_num} does not have \"{attr_key}\" attribute.")
+        raise AttributeError(f"Fixture {self.fixture_id} does not have \"{attr_key}\" attribute.")
+
+
+    def get_id(self) -> str:
+        return self.fixture_id
 
 
     def set_num(self, number: int, feedback: bool = False):
@@ -53,6 +66,7 @@ class Fixture:
         """Returns a string that contains all data from this class"""
         return(
             f""" ----- Fixture Data -------
+            ID:    {self.fixture_id};
             Addr:  {self.DMX_addr};
             Chan:  {self.fixture_channels};
             Num:   {self.fixture_num};
@@ -63,6 +77,7 @@ class Fixture:
     def to_dict(self) -> dict:
         """Returns Dictionary object (JSON) of this class"""
         return {
+            "id":       self.fixture_id,
             "label":    self.fixture_label,
             "address":  self.DMX_addr,
             "icon":     self.icon,
@@ -88,7 +103,7 @@ FIXTURE_TYPES = FixtureType()
 
 class FixtureMatrix:
     def __init__(self, data: dict, size: tuple[int, int]):
-        self.cols, self.rows = size
+        self.rows, self.cols = size
         self.matrix = [[None for _ in range(self.cols)] for _ in range(self.rows)]
 
         self._populateMatrix(data.get("universe-1", []))
@@ -105,7 +120,8 @@ class FixtureMatrix:
                                         fixture_icon    = fix["icon"],
                                         fixture_type    = fix["type"],
                                         fixture_label   = fix["label"],
-                                        group           = fix["group"]
+                                        group           = fix["group"],
+                                        fixture_id      = fix.get("id")
                                     )
 
 
@@ -116,11 +132,12 @@ class FixtureMatrix:
             return self.matrix[y][x]
 
 
-    def find_by_num(self, num: int) -> Fixture:
-        """Finds fixture by its number"""
+    def find_by_id(self, fixture_id: str) -> Fixture:
+        """Finds fixture by its unique ID. Returns None if not found."""
+        fixture_id = str(fixture_id)
         for row in self.matrix:
             for fix in row:
-                if fix and fix.fixture_num == num:
+                if fix and fix.fixture_id == fixture_id:
                     return fix
         return None
 
@@ -166,12 +183,13 @@ class FixtureMatrix:
                                 fixture_icon    = fixture_data["icon"],  
                                 fixture_type    = fixture_data["type"],
                                 fixture_label   = fixture_data["label"],
-                                group           = fixture_data["group"]
+                                group           = fixture_data["group"],
+                                fixture_id      = fixture_data.get("id")
                             )
         
         if fixture_data["type"] == "group":
             for fix_data in fixture_data["selected_fixtures"]:
-                fix = self.find_fixture(fix_data["x"], fix_data["y"])
+                fix = self.find_by_id(fix_data["id"])
                 if fix:
                     fix.grouped_to = fixture_data["group"]
 

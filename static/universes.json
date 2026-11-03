@@ -1,13 +1,25 @@
 {
     "universe-1": [
         {
-            "label": "pareka",
+            "id": "32f82daa7d7f435c957b3b2d4c472b6b",
+            "label": "hlava",
             "address": 1,
-            "icon": "led_par",
+            "icon": "moving_head",
             "number": 1,
-            "type": "testESP",
+            "type": "moving_head_150",
             "group": "",
             "x": 0,
+            "y": 0
+        },
+        {
+            "id": "bd68704f010743268c8fa5c5d9331ddc",
+            "label": "pareka",
+            "address": 10,
+            "icon": "led_par",
+            "number": 1,
+            "type": "ringo_led_par",
+            "group": "",
+            "x": 1,
             "y": 0
         }
     ]

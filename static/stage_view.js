@@ -1,18 +1,18 @@
 function switchRightTab(tabName) {
-    const tabColors = document.getElementById('tab-colors-gobos');
+    const tabPresets = document.getElementById('presets-grid-container');
     const tabStage = document.getElementById('tab-stage-view');
-    const btnColors = document.getElementById('btn-tab-colors');
+    const btnPresets = document.getElementById('btn-tab-presets');
     const btnStage = document.getElementById('btn-tab-stage');
 
-    if (tabName === 'colors') {
-        tabColors.style.display = 'block';
+    if (tabName === 'presets') {
+        tabPresets.style.display = 'block';
         tabStage.style.display = 'none';
-        btnColors.classList.add('active');
+        btnPresets.classList.add('active');
         btnStage.classList.remove('active');
     } else if (tabName === 'stage') {
-        tabColors.style.display = 'none';
+        tabPresets.style.display = 'none';
         tabStage.style.display = 'block';
-        btnColors.classList.remove('active');
+        btnPresets.classList.remove('active');
         btnStage.classList.add('active');
 
         // Po prepnutí vyrenderujeme aktuálny stav svetiel
@@ -45,7 +45,7 @@ function renderStageView() {
 
         el.innerHTML = `<div class="stage-lens"></div>`;
         
-        if (selectedFixtures.find(f => f.number === fixture.number)) el.classList.add("active");
+        if (selectedFixtures.find(f => f.id === fixture.id)) el.classList.add("active");
 
         let isDragging = false;
         const startDrag = (e) => { isDragging = true; el.style.cursor = "grabbing"; };
